@@ -1,1 +1,6 @@
-# bilibili_draw
+# Autolabor B站抽奖小程序源码
+
+## 文件说明
+
+html：页面
+json：数据（更新时间：2021/1/25 15:30）
