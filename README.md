@@ -10,5 +10,7 @@
   - reply，评论数据
   - followers,关注数据
   
+ - jpg：图片
+  
   
   
