@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Autolabor奥特雷柏抽奖</title>
+	<meta charset="UTF-8">
+	<!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<style type="text/css">
+		.cross {text-decoration: line-through}
+		input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+		input[type="number"]{ -moz-appearance: textfield; }
+	</style>
+	<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+	<script type="text/javascript">
+		Date.prototype.format = function(format){
+			var o = {
+			"M+" : this.getMonth()+1, //month
+			"d+" : this.getDate(),    //day
+			"h+" : this.getHours(),   //hour
+			"m+" : this.getMinutes(), //minute
+			"s+" : this.getSeconds(), //second
+			"q+" : Math.floor((this.getMonth()+3)/3),  //quarter
+			"S" : this.getMilliseconds() //millisecond
+			}
+			if(/(y+)/.test(format)) format=format.replace(RegExp.$1,
+			(this.getFullYear()+"").substr(4 - RegExp.$1.length));
+			for(var k in o)if(new RegExp("("+ k +")").test(format))
+			format = format.replace(RegExp.$1,
+			RegExp.$1.length==1 ? o[k] :
+			("00"+ o[k]).substr((""+ o[k]).length));
+			return format;
+		}
+		$(function(){
+			var list = [];
+			var followerlist = {};
+			$.getJSON("./followers.json", "", function(followerdata) {
+				followerlist = followerdata.data;
+				$.getJSON("./reply3.json", "", function(page3data) {
+					var endTime = Math.round(new Date('2021-01-22 17:31:37').getTime()/1000);
+					console.debug(endTime);
+					var page3 = page3data.data.replies;
+					$.getJSON("./reply2.json", "", function(page2data) {
+						var page2 = page2data.data.replies;
+						var replylist = page3.concat(page2);
+						$.getJSON("./reply1.json", "", function(page1data) {
+							var page1 = page1data.data.replies;
+							replylist = replylist.concat(page1);
+							$.each(replylist,function(v,i){
+								list.push({
+									rpid:i.rpid,
+									mid:i.mid,
+									ctime: new Date(i.ctime*1000).format("yyyy-MM-dd hh:mm"),
+									mname:i.member.uname,
+									content:i.content.message,
+									follower:i.member.is_followed?true:false,
+									outdate:i.ctime>endTime
+								})
+							});
+					 		list.sort(function(i1,i2){
+					 			return i1.rpid-i2.rpid;
+					 		});
+					 		var idlist = '';
+					  		$.each(list,function(v,i){
+					  			var template = '<tr id="comment-'+(v+1)+'">';
+					  			template += '<td>'+(v+1)+'</td>';
+					  			template += '<td class="'+(idlist.indexOf(i.mid)>0?'posted':'')+'">'+i.mid+'</td>';
+								template += '<td>'+i.mname+'</td>';
+								template += '<td>'+i.ctime+'</td>';
+								template += '<td>'+i.content+'</td>';
+								template += '<td class="'+(followerlist[i.mid].follow?'':'notFollow')+'">'+(followerlist[i.mid].follow? (new Date(followerlist[i.mid].ftime*1000).format("yyyy-MM-dd hh:mm")+"关注"):"未关注")+'</td>';		
+								template += '<td class="'+(i.outdate?'outdate':'')+'">'+(i.outdate?"是，评论于"+i.ctime:"否")+'</td>';
+								template += '</tr>';
+								$("#table").append(template);
+								idlist = idlist + ',' + i.mid;
+						  	});
+						  	console.debug(idlist);
+						  $("#comment-num").text(list.length);
+				  		});
+					});
+			  	});
+		  	});
+
+			$("button.notFollow").click(function(){
+				$("td.notFollow").parent("tr").addClass('cross');
+				$("#valid-comment-num").text(list.length-$("tr.cross").length);
+				$(this).removeClass("btn-default").addClass("btn-primary");
+			});
+			$("button.posted").click(function(){
+				$("td.posted").parent("tr").addClass('cross');
+				$("#valid-comment-num").text(list.length-$("tr.cross").length);
+				$(this).removeClass("btn-default").addClass("btn-primary");
+			});
+			$("button.outdate").click(function(){
+				$("td.outdate").parent("tr").addClass('cross');
+				$("#valid-comment-num").text(list.length-$("tr.cross").length);
+				$(this).removeClass("btn-default").addClass("btn-primary");
+			});
+			$("#caculate-btn").click(function(){
+				var playNum = $("#play-num").val();
+				$("#reward-num").val(Math.round(playNum/2333));
+			});
+			var resultlist={};
+			$("#open-btn").click(function(){
+				var max = $("#max-num").val();
+				var min = $("#min-num").val();
+				var result = Math.floor(Math.random()*(parseInt(max) - parseInt(min) + 1)) + parseInt(min);
+				if($("#comment-"+result).hasClass("cross")){
+					$("#comment-"+result).addClass("danger");
+
+				}else{
+					$("#comment-"+result).addClass("success");
+				}
+				if(resultlist[result]){
+					$("#comment-"+result).clone().addClass("success cross").appendTo("#result");
+				}else{
+					$("#comment-"+result).clone().appendTo("#result");
+				}
+				resultlist[result] = true;
+			});
+		});
+
+	</script>
+
+</head>
+<body>
+<div class="container">
+	<div class="row">
+		<h1>Autolabor奥特雷柏-抽奖活动开奖</h1>
+
+	</div>
+	<!-- Stack the columns on mobile by making one full-width and the other half-width -->
+	<div class="row">
+	  <div class="col-md-12">
+	  		<div class="panel panel-default">
+			  <div class="panel-heading">活动说明</div>
+			  <div class="panel-body">
+			    <p><b>抽奖参与方式</b>： 1.关注UP主 2.在指定视频下留言（同一id多条留言仅取第一条）</p>
+				<p><b>截止时间</b>：指定视频发布一周后 (2021-01-22 17:31:37)</p>
+				<p><b>奖品数量</b> = Math.round(《ROS理论与实践》视频播放量/2333) 注：奖品数量 <= 10 例：6580/2333≈3，奖品数量：3 个</p>
+			  </div>
+			</div>
+
+			<div class="panel panel-default">
+			  <div class="panel-heading">
+			    <h3 class="panel-title">奖品数量</h3>
+			  </div>
+			  <div class="panel-body">
+			   <form class="form-inline">
+				  <div class="form-group">
+				  	<div class="form-group">Math.round (</div>
+				    <input type="number" class="form-control" id="play-num" placeholder="《ROS理论与实践》播放量">
+				  </div>
+				  <div class="form-group">/ 2333 ) = </div>
+				  <div class="form-group">
+				    <input type="number" readonly="" class="form-control" id="reward-num" placeholder="奖品数量">
+				  </div>
+				  <button type="button" class="btn btn-default" id="caculate-btn">计算</button>
+				</form>
+				<p></p> 
+				<p><img width="50%" src="./view.jpg"  class="img-thumbnail"></p>
+			  </div>
+			</div>
+			<div class="panel panel-default">
+			  <div class="panel-heading">
+			    <h3 class="panel-title">开奖</h3>
+			  </div>
+			  <div class="panel-body">
+			  	<h4>抽奖规则：</h4>
+			  	<p>1. 依照发放奖品的个数，依次抽取 max~min 范围内的随机整数，包含max、min，例：如有25条评论，则随机抽取1-25范围内的随机整数</p>
+			  	<p>2. 如抽取的评论是无效评论（不符合抽奖规则）或重复，则此次抽取无效，重新进行抽取</p>
+			  	<p>抽取算法：Math.floor(Math.random() * (max - min + 1)) + min </p>
+			   <form class="form-inline">
+				  <div class="form-group">
+				  	<div class="form-group">Math.floor(Math.random() * (</div>
+				    <input type="number" class="form-control" id="max-num" placeholder="max">
+				  </div>
+				  <div class="form-group">-</div>
+				  <input type="number" class="form-control" id="min-num" placeholder="min">
+				  <div class="form-group"> + 1)) +</div>
+				  	<div class="form-group"> 
+				    <input type="number"  class="form-control" placeholder="min">
+				  </div>
+				  <button type="button" class="btn btn-success" id="open-btn">抽奖</button>
+				</form>
+				<p></p>
+				<div class="panel panel-default">
+					  <!-- Default panel contents -->
+					  <div class="panel-heading">抽奖结果</div>
+					  <table width="80%" class="table">
+						<thead>
+							<tr>
+								<td width="5%">序号</td>
+								<td width="5%">UID</td>
+								<td width="10%">昵称</td>
+								<td width="10%">评论时间</td>
+								<td width="20%">评论内容</td>
+								<td width="15%">是否关注UP主</td>
+								<td width="15%">留言是否超过截止时间</td>
+							</tr>
+						</thead>
+						<tbody id="result">
+						</tbody>
+						</table>
+					</div>
+						</div>
+			</div>
+	</div>
+	
+</div>
+<div class="row">
+	  <div class="col-md-12">
+	  	<div class="panel panel-default">
+		  <!-- Default panel contents -->
+		  <div class="panel-heading clearfix">所有评论&nbsp;&nbsp;<span class="badge" id="comment-num">0</span>
+		  	&nbsp;&nbsp;有效评论&nbsp;&nbsp;<span class="badge" id="valid-comment-num">-</span>
+		  	<div class="pull-right">
+
+		  		
+
+			  	<button type="button" class="btn btn-default notFollow">没有关注UP主</button>
+
+				<!-- Indicates a successful or positive action -->
+				<button type="button" class="btn btn-default outdate">评论超过活动截止时间</button>
+
+			<!-- Contextual button for informational alert messages -->
+
+				<button type="button" class="btn btn-default posted">重复的评论</button>
+
+				
+			</div>
+		  </div>
+		  <table width="80%" class="table">
+			<thead>
+				<tr>
+					<td width="5%">序号</td>
+					<td width="5%">UID</td>
+					<td width="10%">昵称</td>
+					<td width="10%">评论时间</td>
+					<td width="20%">评论内容</td>
+					<td width="15%">是否关注UP主</td>
+					<td width="15%">留言是否超过截止时间</td>
+				</tr>
+			</thead>
+			<tbody id="table">
+			</tbody>
+			</table>
+		</div>
+	  </div>
+	</div>
+</body>
+</html>
+
